@@ -1,0 +1,42 @@
+version: '3.1'
+services:
+  db:
+    image: mariadb
+    restart: always
+    volumes:
+      - './db:/var/lib/mysql'
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: password
+  memcached:
+    image: 'memcached:latest'
+    restart: always
+  phpfpm:
+    build: .
+    expose:
+      - 9000
+    restart: always
+    depends_on:
+      - db
+      - memcached
+    volumes:
+      - './www/wordpress:/var/www/html'
+      - './www/static:/var/www/html/static'
+      - './log:/var/log'
+  h2o:
+    image: lkwg82/h2o-http2-server
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - './h2o-conf:/etc/h2o'
+      - './certs:/etc/h2o/certs'
+      - './www/wordpress:/var/www/html'
+      - './www/static:/var/www/html/static'
+      - './log:/var/log'
+    working_dir: /etc/h2o
+    restart: always
+    depends_on:
+      - phpfpm
